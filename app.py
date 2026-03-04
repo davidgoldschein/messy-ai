@@ -8,6 +8,7 @@ from models import db, User, ProcessPost, Prototype, Comment, EditSuggestion, Up
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-for-messy-ai')
+    basedir = os.path.abspath(os.path.dirname(__file__))
     
     # Configure Database
     database_url = os.environ.get('DATABASE_URL')
@@ -18,7 +19,6 @@ def create_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
         # Fallback to local SQLite
-        basedir = os.path.abspath(os.path.dirname(__file__))
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'app.db')
         
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
