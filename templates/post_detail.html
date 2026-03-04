@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8 max-w-4xl mx-auto">
+    <!-- Post Detail Header -->
+    <div class="animate-fade-in">
+        <a href="{{ url_for('index') }}"
+            class="text-brand-400 hover:text-brand-300 flex items-center space-x-2 transition-colors mb-6 group">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 transform group-hover:-translate-x-1 transition-transform" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Feed</span>
+        </a>
+
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl border-white/10">
+            <!-- Main Content Area -->
+            <div class="p-8 sm:p-12">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ url_for('profile', username=post.author.username) }}"
+                            class="h-12 w-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold text-xl border border-slate-700 hover:border-brand-500 transition-colors">
+                            {{ post.author.username[0] }}
+                        </a>
+                        <div>
+                            <p class="text-white font-bold text-lg"><a
+                                    href="{{ url_for('profile', username=post.author.username) }}"
+                                    class="hover:text-brand-400 transition-colors">{{ post.author.username }}</a></p>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <p class="text-sm text-slate-400 uppercase tracking-widest">{{
+                                    post.created_at.strftime('%B %d, %Y') }} &middot; SMB OWNER</p>
+                                <span
+                                    class="text-xs text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-full border border-brand-500/20 font-bold uppercase tracking-wider">{{
+                                    post.category }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-start justify-between mb-6 gap-6">
+                    <h1 class="text-4xl font-extrabold text-white leading-tight flex-1">{{ post.title }}</h1>
+
+                    <!-- Main Post Upvote Button -->
+                    <form action="{{ url_for('toggle_upvote', item_type='post', item_id=post.id) }}" method="POST"
+                        class="flex-shrink-0">
+                        {% set user_voted = false %}
+                        {% if current_user.is_authenticated %}
+                        {% for vote in post.upvotes %}
+                        {% if vote.user_id == current_user.id %}
+                        {% set user_voted = true %}
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                        <button type="submit"
+                            class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border-2 transition-all 
+                            {% if user_voted %}bg-brand-500/20 text-brand-400 border-brand-500/50{% else %}bg-slate-900 text-slate-400 border-white/10 hover:bg-slate-800 hover:text-white hover:border-white/20{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1"
+                                fill="{% if user_voted %}currentColor{% else %}none{% endif %}" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                            </svg>
+                            <span class="text-sm font-black">{{ post.upvote_count }}</span>
+                        </button>
+                    </form>
+                </div>
+                <div class="bg-black/20 rounded-2xl p-6 border border-white/5 mb-8">
+                    <p class="text-slate-300 text-lg leading-relaxed whitespace-pre-line">{{ post.description }}</p>
+                </div>
+
+                {% if post.image_url %}
+                <div class="rounded-2xl overflow-hidden mb-12 border border-white/10 shadow-inner">
+                    <img src="{{ post.image_url }}" alt="Process Image" class="w-full h-auto">
+                </div>
+                {% endif %}
+
+                <!-- Tabs/Sections Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Left: Solutions -->
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-bold text-white">Prototypes</h2>
+                            {% if current_user.is_authenticated and current_user.role == 'enthusiast' %}
+                            <button onclick="document.getElementById('prototype-modal').classList.remove('hidden')"
+                                class="text-xs bg-brand-500/10 text-brand-400 px-3 py-1.5 rounded-lg border border-brand-500/20 hover:bg-brand-500/20 transition-all font-bold">
+                                + Build
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        {% if post.prototypes %}
+                        <div class="space-y-4">
+                            {% for proto in post.prototypes %}
+                            <a href="{{ proto.link_url }}" target="_blank" class="block group">
+                                <div
+                                    class="p-5 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-brand-500/40 hover:bg-slate-900 transition-all">
+                                    <div class="flex items-start justify-between mb-3 gap-4">
+                                        <div>
+                                            <h3
+                                                class="text-white font-bold group-hover:text-brand-400 transition-colors mb-2">
+                                                {{ proto.title }}</h3>
+                                            <p class="text-sm text-slate-400">{{ proto.description }}</p>
+                                        </div>
+
+                                        <!-- Prototype Upvote -->
+                                        <form
+                                            action="{{ url_for('toggle_upvote', item_type='prototype', item_id=proto.id) }}"
+                                            method="POST" class="z-20 pointer-events-auto">
+                                            {% set proto_voted = false %}
+                                            {% if current_user.is_authenticated %}
+                                            {% for vote in proto.upvotes %}
+                                            {% if vote.user_id == current_user.id %}
+                                            {% set proto_voted = true %}
+                                            {% endif %}
+                                            {% endfor %}
+                                            {% endif %}
+                                            <button type="submit"
+                                                class="flex flex-col items-center justify-center px-2 py-1.5 rounded-xl border transition-all 
+                                                {% if proto_voted %}bg-brand-500/20 text-brand-400 border-brand-500/50{% else %}bg-slate-800 text-slate-500 border-white/5 hover:bg-slate-700 hover:text-white{% endif %}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="{% if proto_voted %}currentColor{% else %}none{% endif %}"
+                                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M5 15l7-7 7 7" />
+                                                </svg>
+                                                <span class="text-xs font-bold mt-0.5">{{ proto.upvote_count }}</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="flex items-center space-x-2 relative z-30">
+                                        <a href="{{ url_for('profile', username=proto.author.username) }}"
+                                            class="h-6 w-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white hover:bg-brand-500 transition-colors">
+                                            {{ proto.author.username[0] }}
+                                        </a>
+                                        <a href="{{ url_for('profile', username=proto.author.username) }}"
+                                            class="text-xs text-slate-500 hover:text-brand-400 transition-colors">Built
+                                            by {{ proto.author.username }}</a>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-12 text-center border-2 border-dashed border-white/5 rounded-2xl">
+                            <p class="text-slate-500 text-sm">Waiting for a hero to build the first prototype.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Right: Edits & Comments -->
+                    <div class="space-y-8">
+                        <!-- Edit Suggestions -->
+                        <section class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-xl font-bold text-white">Process Refinements</h2>
+                                {% if current_user.is_authenticated %}
+                                <button onclick="document.getElementById('edit-modal').classList.remove('hidden')"
+                                    class="text-xs text-slate-400 hover:text-white transition-colors border-b border-white/10 italic">
+                                    Suggest Edit
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            {% if post.edit_suggestions %}
+                            <div class="space-y-3">
+                                {% for edit in post.edit_suggestions %}
+                                <div class="p-4 rounded-xl bg-slate-900/30 border border-white/5">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span
+                                            class="text-xs font-medium px-2 py-0.5 rounded-full {% if edit.status == 'approved' %}bg-green-500/10 text-green-500{% elif edit.status == 'rejected' %}bg-red-500/10 text-red-500{% else %}bg-yellow-500/10 text-yellow-500{% endif %} uppercase">
+                                            {{ edit.status }}
+                                        </span>
+                                        <span class="text-[10px] text-slate-500 italic">{{ edit.created_at.strftime('%b
+                                            %d') }}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mb-3">Proposed by <span class="text-slate-300">{{
+                                            edit.author.username }}</span></p>
+
+                                    {% if current_user.is_authenticated and current_user.id == post.author_id and
+                                    edit.status == 'pending' %}
+                                    <div class="flex space-x-2 pt-3 border-t border-white/5">
+                                        <form action="{{ url_for('approve_edit', edit_id=edit.id) }}" method="POST">
+                                            <button type="submit"
+                                                class="text-xs font-semibold bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white px-3 py-1.5 rounded-lg transition-all border border-green-500/20">
+                                                Approve
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('reject_edit', edit_id=edit.id) }}" method="POST">
+                                            <button type="submit"
+                                                class="text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-all border border-red-500/20">
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-slate-600 text-xs italic">No suggested refinements yet.</p>
+                            {% endif %}
+                        </section>
+
+                        <!-- Comments -->
+                        <section class="space-y-6">
+                            <h2 class="text-xl font-bold text-white">Discussion</h2>
+
+                            {% if current_user.is_authenticated %}
+                            <form action="{{ url_for('add_comment', post_id=post.id) }}" method="POST"
+                                class="relative group">
+                                <input name="text" placeholder="Add a comment..." required
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-500/50 transition-all pr-24">
+                                <button type="submit"
+                                    class="absolute right-2 top-2 bg-brand-500/20 text-brand-400 px-3 py-1 rounded-lg text-xs font-bold hover:bg-brand-500 hover:text-white transition-all">
+                                    Send
+                                </button>
+                            </form>
+                            {% else %}
+                            <div class="bg-slate-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-center">
+                                <p class="text-slate-400">Please <a href="{{ url_for('login') }}"
+                                        class="text-brand-400 hover:underline">log in</a> to join the discussion.</p>
+                            </div>
+                            {% endif %}
+
+                            <div class="space-y-4">
+                                {% for comment in post.comments %}
+                                <div class="flex space-x-3">
+                                    <div
+                                        class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-white border border-white/10 flex-shrink-0">
+                                        {{ comment.author.username[0] }}
+                                    </div>
+                                    <div class="bg-slate-900/40 rounded-2xl p-4 border border-white/5 flex-grow">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs font-bold text-slate-300">{{ comment.author.username
+                                                }}</span>
+                                            <span class="text-[10px] text-slate-600">{{
+                                                comment.created_at.strftime('%H:%M') }}</span>
+                                        </div>
+                                        <p class="text-sm text-slate-400 leading-relaxed">{{ comment.text }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="prototype-modal"
+    class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="glass max-w-lg w-full rounded-3xl p-8 border-white/10 shadow-2xl relative animate-fade-in">
+        <button onclick="this.closest('#prototype-modal').classList.add('hidden')"
+            class="absolute top-4 right-4 text-slate-500 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <h2 class="text-2xl font-bold text-white mb-6">Submit a Prototype</h2>
+        <form action="{{ url_for('new_prototype', post_id=post.id) }}" method="POST" class="space-y-4">
+            <input type="text" name="title" required placeholder="Title of your prototype"
+                class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500">
+            <textarea name="description" required placeholder="How does it solve the problem?"
+                class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500"
+                rows="3"></textarea>
+            <input type="url" name="link_url" required placeholder="URL to the prototype (e.g., GitHub, Vercel)"
+                class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500">
+            <button type="submit"
+                class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-all">Submit
+                Solution</button>
+        </form>
+    </div>
+</div>
+
+<div id="edit-modal"
+    class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="glass max-w-lg w-full rounded-3xl p-8 border-white/10 shadow-2xl relative animate-fade-in">
+        <button onclick="this.closest('#edit-modal').classList.add('hidden')"
+            class="absolute top-4 right-4 text-slate-500 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <h2 class="text-2xl font-bold text-white mb-6">Refine the Problem</h2>
+        <form action="{{ url_for('suggest_edit', post_id=post.id) }}" method="POST" class="space-y-4">
+            <input type="text" name="title" value="{{ post.title }}"
+                class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500">
+            <textarea name="description"
+                class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500"
+                rows="6">{{ post.description }}</textarea>
+            <button type="submit"
+                class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all">Submit
+                Refinement</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

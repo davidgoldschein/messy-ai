@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messy.AI - The Social Sandbox for SMBs and AI Enthusiasts</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-slate-950 text-slate-200 antialiased min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass border-b border-white/5">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center space-x-2">
+                    <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+                            M</div>
+                        <span
+                            class="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Messy.AI</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if current_user.is_authenticated %}
+                    <div class="flex items-center space-x-4 text-sm z-50">
+                        <span class="text-slate-400 hidden sm:inline">Logged in as <a
+                                href="{{ url_for('profile', username=current_user.username) }}"
+                                class="text-white hover:text-brand-400 transition-colors font-bold">{{
+                                current_user.username }}</a></span>
+                        <span
+                            class="font-medium text-brand-400 text-xs px-2 py-0.5 rounded-full border border-brand-500/30 bg-brand-500/10 uppercase tracking-widest">{{
+                            current_user.role }}</span>
+
+                        <!-- Notifications Dropdown -->
+                        <div class="relative group">
+                            <button id="noti-btn"
+                                class="relative p-2 text-slate-400 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                {% if unread_count > 0 %}
+                                <span
+                                    class="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-slate-950">
+                                    {{ unread_count }}
+                                </span>
+                                {% endif %}
+                            </button>
+
+                            <!-- Dropdown Panel -->
+                            <div id="noti-panel"
+                                class="hidden absolute right-0 mt-2 w-80 glass border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in">
+                                <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                                    <span class="text-xs font-black uppercase text-slate-400">Notifications</span>
+                                    {% if unread_count > 0 %}
+                                    <form action="{{ url_for('mark_notifications_read') }}" method="POST">
+                                        <button type="submit"
+                                            class="text-[10px] text-brand-400 hover:text-brand-300 font-bold uppercase transition-colors">Mark
+                                            all read</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                <div class="max-h-96 overflow-y-auto">
+                                    {% if nav_notifications %}
+                                    {% for noti in nav_notifications %}
+                                    <a href="{{ noti.link or '#' }}"
+                                        class="block p-4 hover:bg-white/5 border-b border-white/5 transition-colors {% if not noti.is_read %}bg-brand-500/5{% endif %}">
+                                        <p class="text-xs text-white leading-relaxed mb-1">{{ noti.message }}</p>
+                                        <span class="text-[10px] text-slate-500 uppercase">{{
+                                            noti.created_at.strftime('%b %d, %H:%M') }}</span>
+                                    </a>
+                                    {% endfor %}
+                                    {% else %}
+                                    <div class="p-8 text-center">
+                                        <p class="text-xs text-slate-500 italic">No notifications yet.</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            const btn = document.getElementById('noti-btn');
+                            const panel = document.getElementById('noti-panel');
+                            btn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                panel.classList.toggle('hidden');
+                            });
+                            document.addEventListener('click', () => panel.classList.add('hidden'));
+                        </script>
+                        <a href="{{ url_for('logout') }}"
+                            class="text-slate-400 hover:text-white transition-colors text-xs uppercase tracking-widest font-bold ml-4">Logout</a>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}"
+                        class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Log in</a>
+                    <a href="{{ url_for('register') }}"
+                        class="text-sm font-medium bg-white text-slate-900 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors shadow-lg">Sign
+                        up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flashed Messages -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        {% for message in messages %}
+        <div class="bg-blue-500/20 text-brand-400 border border-blue-500/30 px-4 py-3 rounded-xl shadow-lg text-sm text-center animate-fade-in"
+            role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 mt-auto py-8 text-center text-slate-500 text-sm">
+        <p>&copy; 2026 Messy.AI. Built for Vibe Coding.</p>
+    </footer>
+</body>
+
+</html>

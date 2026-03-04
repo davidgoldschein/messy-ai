@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-8 animate-fade-in">
+    <div class="glass p-8 rounded-3xl border-white/10 shadow-2xl">
+        <h1 class="text-3xl font-extrabold text-white text-center mb-2">Join Messy.AI</h1>
+        <p class="text-slate-400 text-center mb-8 text-sm">Create an account to participate in the sandbox.</p>
+
+        <form action="{{ url_for('register') }}" method="POST" class="space-y-5">
+            <div class="space-y-2">
+                <label for="username" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Choose a unique username"
+                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition-colors">
+            </div>
+
+            <div class="space-y-2">
+                <label for="password" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Create a secure password"
+                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition-colors">
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider block">I am a...</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="cursor-pointer relative group">
+                        <input type="radio" name="role" value="smb" class="peer sr-only" required>
+                        <div
+                            class="p-4 rounded-xl border border-white/10 bg-slate-900/50 hover:bg-slate-900 peer-checked:border-brand-500 peer-checked:bg-brand-500/10 transition-all text-center">
+                            <span class="block text-white font-bold mb-1">SMB Owner</span>
+                            <span class="text-[10px] text-slate-400">I have processes to fix</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer relative group">
+                        <input type="radio" name="role" value="enthusiast" class="peer sr-only">
+                        <div
+                            class="p-4 rounded-xl border border-white/10 bg-slate-900/50 hover:bg-slate-900 peer-checked:border-brand-500 peer-checked:bg-brand-500/10 transition-all text-center">
+                            <span class="block text-white font-bold mb-1">AI Enthusiast</span>
+                            <span class="text-[10px] text-slate-400">I want to build solutions</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                Create Account
+            </button>
+        </form>
+
+        <p class="mt-8 text-center text-sm text-slate-400">
+            Already have an account? <a href="{{ url_for('login') }}"
+                class="text-brand-400 hover:text-white transition-colors font-medium">Log in</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

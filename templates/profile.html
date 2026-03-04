@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-12 animate-fade-in">
+    <!-- Profile Header Card -->
+    <div class="glass p-8 sm:p-12 rounded-[2.5rem] border-white/10 shadow-2xl relative overflow-hidden">
+        <!-- Abstract Background Glows -->
+        <div class="absolute -top-24 -left-24 w-64 h-64 bg-brand-500/20 rounded-full blur-[80px]"></div>
+        <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px]"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-8">
+            <!-- Avatar -->
+            <div
+                class="h-32 w-32 rounded-3xl bg-slate-800 flex items-center justify-center text-white font-black text-5xl border-2 border-white/10 shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+                {{ user.username[0] }}
+            </div>
+
+            <div class="flex-1 text-center md:text-left space-y-2">
+                <div class="flex flex-col md:flex-row md:items-center gap-3">
+                    <h1 class="text-4xl font-black text-white tracking-tight">{{ user.username }}</h1>
+                    <span
+                        class="inline-block px-4 py-1.5 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-black uppercase tracking-widest self-center md:self-auto">
+                        {% if user.role == 'smb' %}SMB Owner{% else %}AI Enthusiast{% endif %}
+                    </span>
+                </div>
+                <p class="text-slate-400 font-medium">Joined Messy.AI on {{ user.created_at.strftime('%B %Y') }}</p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex gap-4 sm:gap-8 bg-black/30 p-6 rounded-3xl border border-white/5 backdrop-blur-md">
+                <div class="text-center">
+                    <p class="text-2xl font-black text-white">{{ total_upvotes }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Upvotes Rec.</p>
+                </div>
+                <div class="w-px h-10 bg-white/10 self-center"></div>
+                <div class="text-center">
+                    <p class="text-2xl font-black text-white">{{ posts_count }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Messes Posted</p>
+                </div>
+                <div class="w-px h-10 bg-white/10 self-center"></div>
+                <div class="text-center">
+                    <p class="text-2xl font-black text-white">{{ prototypes_count }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Solutions Built</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Tabs/Lists -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- User's Messy Processes -->
+        <div class="space-y-6">
+            <h2 class="text-2xl font-black text-white flex items-center gap-3">
+                <span class="w-1.5 h-8 bg-brand-500 rounded-full"></span>
+                Messy Processes
+            </h2>
+
+            {% if user.posts %}
+            <div class="space-y-4">
+                {% for post in user.posts %}
+                <a href="{{ url_for('view_post', post_id=post.id) }}" class="block group">
+                    <div
+                        class="glass p-6 rounded-2xl border-white/5 group-hover:border-brand-500/30 group-hover:bg-brand-500/5 transition-all">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-white font-bold group-hover:text-brand-400 transition-colors">{{ post.title
+                                }}</h3>
+                            <span class="text-[10px] text-slate-500 uppercase font-bold">{{ post.created_at.strftime('%b
+                                %d') }}</span>
+                        </div>
+                        <p class="text-sm text-slate-400 line-clamp-2">{{ post.description }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-8 text-center glass border-dashed rounded-2xl border-white/10">
+                <p class="text-slate-500 text-sm">No messes shared yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- User's Prototypes -->
+        <div class="space-y-6">
+            <h2 class="text-2xl font-black text-white flex items-center gap-3">
+                <span class="w-1.5 h-8 bg-blue-500 rounded-full"></span>
+                Built Solutions
+            </h2>
+
+            {% if user.prototypes %}
+            <div class="space-y-4">
+                {% for proto in user.prototypes %}
+                <a href="{{ url_for('view_post', post_id=proto.post_id) }}" class="block group">
+                    <div
+                        class="glass p-6 rounded-2xl border-white/5 group-hover:border-blue-500/30 group-hover:bg-blue-500/5 transition-all">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="text-white font-bold group-hover:text-blue-400 transition-colors">{{ proto.title
+                                }}</h3>
+                            <div class="flex items-center gap-1 text-blue-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+                                </svg>
+                                <span class="text-xs font-black">{{ proto.upvote_count }}</span>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mb-3">Solving: {{ proto.post.title }}
+                        </p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-8 text-center glass border-dashed rounded-2xl border-white/10">
+                <p class="text-slate-500 text-sm">No solutions built yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
