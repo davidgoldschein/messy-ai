@@ -5,10 +5,13 @@ app = create_app()
 
 def seed_data():
     with app.app_context():
-        print("Dropping existing tables...")
-        db.drop_all()
-        print("Creating tables...")
+        print("Checking if database needs initialization...")
         db.create_all()
+        
+        # Check if users already exist to avoid duplicates
+        if User.query.first():
+            print("Database already contains data. Skipping seeding.")
+            return
 
         print("Adding mock users...")
         user1 = User(username='SMB_Owner_Alice', role='smb')
