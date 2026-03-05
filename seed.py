@@ -1,5 +1,6 @@
 from app import create_app
 from models import db, User, ProcessPost, Prototype, Comment, EditSuggestion, Upvote
+from sqlalchemy import func
 
 app = create_app()
 
@@ -10,6 +11,36 @@ def seed_data():
         
         print("Checking if database needs initialization...")
         db.create_all()
+
+        print("Cleaning up any duplicate posts...")
+        # Find duplicate titles
+        duplicate_titles = db.session.query(
+            ProcessPost.title
+        ).group_by(ProcessPost.title).having(func.count(ProcessPost.id) > 1).all()
+        
+        for (title,) in duplicate_titles:
+            print(f"  Found duplicates for: '{title}'")
+            posts = ProcessPost.query.filter_by(title=title).order_by(ProcessPost.id).all()
+            original = posts[0]
+            duplicates = posts[1:]
+            
+            for dup in duplicates:
+                # Merge relations
+                Comment.query.filter_by(post_id=dup.id).update({Comment.post_id: original.id})
+                Prototype.query.filter_by(post_id=dup.id).update({Prototype.post_id: original.id})
+                EditSuggestion.query.filter_by(post_id=dup.id).update({EditSuggestion.post_id: original.id})
+                
+                # Careful with upvotes (avoid primary key conflicts during merge)
+                upvotes = Upvote.query.filter_by(post_id=dup.id).all()
+                for upvote in upvotes:
+                    if not Upvote.query.filter_by(user_id=upvote.user_id, post_id=original.id).first():
+                        upvote.post_id = original.id
+                    else:
+                        db.session.delete(upvote)
+                
+                db.session.delete(dup)
+            db.session.commit()
+            print(f"  Merged '{title}'")
 
         print("Adding mock users...")
         def get_or_create_user(username, role='enthusiast'):
