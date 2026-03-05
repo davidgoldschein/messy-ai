@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto animate-fade-in relative">
+
+    <!-- Background Accents -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-brand-500/20 rounded-full blur-[100px] pointer-events-none">
+    </div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] pointer-events-none">
+    </div>
+
+    <div class="text-center mb-12 relative z-10">
+        <span
+            class="inline-block px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-black uppercase tracking-widest mb-4">
+            Interactive Prototype
+        </span>
+        <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Smart Invoice Extractor</h1>
+        <p class="text-slate-400 max-w-2xl mx-auto text-lg">Upload any messy paper invoice and our vision model will
+            instantly extract the vendor, total, and line items into structured JSON data.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+
+        <!-- Left Column: Upload & Image -->
+        <div
+            class="glass p-8 rounded-[2rem] border-white/10 shadow-2xl flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden group">
+
+            <div id="dropzone"
+                class="absolute inset-0 z-20 cursor-pointer flex flex-col items-center justify-center bg-slate-900/50 hover:bg-slate-800/50 transition-colors border-2 border-dashed border-white/10 group-hover:border-brand-500/50 m-6 rounded-3xl"
+                onclick="simulateUpload()">
+                <div id="upload-icon" class="mb-4 text-brand-400 transition-transform group-hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                </div>
+                <h3 id="upload-text" class="text-xl font-bold text-white mb-2">Click to uploaded an invoice</h3>
+                <p id="upload-subtext" class="text-sm text-slate-500">Supports JPG, PNG, or PDF</p>
+
+                <!-- Scanning Overlay (Hidden initially) -->
+                <div id="scanner"
+                    class="hidden absolute inset-0 bg-brand-500/20 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center overflow-hidden">
+                    <div
+                        class="absolute top-0 left-0 w-full h-1 bg-brand-400 shadow-[0_0_15px_rgba(74,222,128,1)] animate-[scan_2s_ease-in-out_infinite]">
+                    </div>
+                    <p class="text-white font-black uppercase tracking-widest animate-pulse mt-4">Running OCR Models...
+                    </p>
+                </div>
+
+                <!-- Processed Image Preview (Hidden initially) -->
+                <img id="preview-image" src="" alt="Invoice Preview"
+                    class="hidden absolute inset-0 w-full h-full object-cover rounded-3xl opacity-50 z-10 p-6 mix-blend-luminosity">
+            </div>
+
+        </div>
+
+        <!-- Right Column: Extracted Data -->
+        <div class="glass p-8 rounded-[2rem] border-white/10 shadow-2xl flex flex-col">
+            <div class="flex items-center justify-between mb-6 pb-6 border-b border-white/5">
+                <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                        <span id="status-ping"
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-500 opacity-75"></span>
+                        <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3 bg-slate-500"></span>
+                    </span>
+                    Structured Output
+                </h2>
+                <button id="copy-btn" disabled
+                    class="text-xs bg-white/5 text-slate-500 px-3 py-1.5 rounded-lg border border-white/10 hover:text-white transition-colors font-bold disabled:opacity-50">Copy
+                    JSON</button>
+            </div>
+
+            <!-- Code Block display -->
+            <div
+                class="bg-black/40 rounded-xl p-6 font-mono text-sm text-slate-300 flex-1 overflow-x-auto border border-white/5 relative">
+                <div id="empty-state" class="absolute inset-0 flex items-center justify-center text-slate-600 italic">
+                    Waiting for document...
+                </div>
+                <pre id="json-output" class="hidden text-brand-300"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mock Data to simulate extraction
+    const mockExtractedData = {
+        "vendor": {
+            "name": "Global Office Supplies Co.",
+            "address": "123 Business Pkwy, Suite 100",
+            "tax_id": "89-1234567"
+        },
+        "invoice_details": {
+            "invoice_number": "INV-2026-089A",
+            "date_issued": "2026-03-01",
+            "due_date": "2026-03-31"
+        },
+        "line_items": [
+            { "description": "Ergonomic Mesh Chair", "qty": 4, "unit_price": 249.99, "total": 999.96 },
+            { "description": "Standing Desk Frame", "qty": 2, "unit_price": 399.00, "total": 798.00 },
+            { "description": "Monitor Arm Mount", "qty": 4, "unit_price": 85.50, "total": 342.00 }
+        ],
+        "totals": {
+            "subtotal": 2139.96,
+            "tax": 181.90,
+            "total_due": 2321.86
+        },
+        "confidence_score": 0.982
+    };
+
+    function simulateUpload() {
+        const dropzone = document.getElementById('dropzone');
+        const icon = document.getElementById('upload-icon');
+        const text = document.getElementById('upload-text');
+        const subtext = document.getElementById('upload-subtext');
+        const scanner = document.getElementById('scanner');
+        const preview = document.getElementById('preview-image');
+        const emptyState = document.getElementById('empty-state');
+        const jsonOutput = document.getElementById('json-output');
+        const copyBtn = document.getElementById('copy-btn');
+        const statusPing = document.getElementById('status-ping');
+        const statusDot = document.getElementById('status-dot');
+
+        // Reset state
+        icon.classList.add('hidden');
+        text.classList.add('hidden');
+        subtext.classList.add('hidden');
+        scanner.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        jsonOutput.classList.add('hidden');
+        preview.src = 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop';
+        preview.classList.remove('hidden');
+
+        statusPing.classList.replace('bg-slate-500', 'bg-brand-500');
+        statusDot.classList.replace('bg-slate-500', 'bg-brand-500');
+
+        let jsonString = JSON.stringify(mockExtractedData, null, 2);
+
+        // Simulate processing delay
+        setTimeout(() => {
+            scanner.classList.add('hidden');
+            jsonOutput.classList.remove('hidden');
+            copyBtn.disabled = false;
+            copyBtn.classList.replace('text-slate-500', 'text-brand-400');
+            copyBtn.classList.replace('bg-white/5', 'bg-brand-500/10');
+            copyBtn.classList.replace('border-white/10', 'border-brand-500/30');
+
+            statusPing.classList.replace('bg-brand-500', 'bg-blue-500');
+            statusDot.classList.replace('bg-brand-500', 'bg-blue-500');
+            statusPing.classList.remove('animate-ping');
+
+            // Typewriter effect for JSON
+            let i = 0;
+            jsonOutput.innerHTML = '';
+
+            // Format syntax highlighting manually for the demo
+            const formatted = jsonString
+                .replace(/"(.*?)":/g, '<span class="text-blue-300">"$1"</span>:')
+                .replace(/: "(.*?)"/g, ': <span class="text-brand-300">"$1"</span>')
+                .replace(/: ([0-9.]+)/g, ': <span class="text-purple-400">$1</span>');
+
+            jsonOutput.innerHTML = formatted;
+
+        }, 2500);
+    }
+</script>
+
+<style>
+    @keyframes scan {
+        0% {
+            top: 0;
+            opacity: 0;
+        }
+
+        10% {
+            opacity: 1;
+        }
+
+        90% {
+            opacity: 1;
+        }
+
+        100% {
+            top: 100%;
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}

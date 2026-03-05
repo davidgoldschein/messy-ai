@@ -248,6 +248,10 @@ def create_app():
                                prototypes_count=prototypes_count,
                                total_upvotes=total_upvotes)
 
+    @app.route('/demo/invoice-parser')
+    def demo_invoice_parser():
+        return render_template('demo_invoice_parser.html')
+
     @app.route('/upvote/<string:item_type>/<int:item_id>', methods=['POST'])
     @login_required
     def toggle_upvote(item_type, item_id):
