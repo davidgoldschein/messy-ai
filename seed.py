@@ -8,22 +8,27 @@ def seed_data():
         print("Checking if database needs initialization...")
         db.create_all()
         
-        # Check if users already exist to avoid duplicates
-        if User.query.first():
-            print("Database already contains data. Skipping seeding.")
+        # Check if our new demo data already exists to avoid duplication
+        if ProcessPost.query.filter_by(title='Extracting data from messy PDF invoices').first():
+            print("Demo data already exists. Skipping seeding.")
             return
 
         print("Adding mock users...")
-        user1 = User(username='SMB_Owner_Alice', role='smb')
-        user1.set_password('password123')
-        user2 = User(username='AI_Dev_Bob', role='enthusiast')
-        user2.set_password('password123')
-        user3 = User(username='Tech_Lead_Charlie', role='enthusiast')
-        user3.set_password('password123')
-        db.session.add(user1)
-        db.session.add(user2)
-        db.session.add(user3)
-        db.session.commit()
+        def get_or_create_user(username, role='enthusiast'):
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                user = User(username=username, role=role)
+                user.set_password('password123')
+                db.session.add(user)
+                db.session.commit()
+            return user
+
+        user1 = get_or_create_user('SMB_Owner_Alice', 'smb')
+        user2 = get_or_create_user('AI_Dev_Bob', 'enthusiast')
+        user3 = get_or_create_user('Tech_Lead_Charlie', 'enthusiast')
+        user4 = get_or_create_user('Data_Nerd_Dave', 'enthusiast')
+        user5 = get_or_create_user('Operations_Olivia', 'smb')
+
 
         print("Adding mock posts...")
         post1 = ProcessPost(
@@ -97,21 +102,20 @@ def seed_data():
         db.session.add(proto2)
         db.session.commit()
 
-        print("Adding mock comments...")
         comment1 = Comment(text="This is such a common problem for small retail!", author_id=user2.id, post_id=post1.id)
-        db.session.add(comment1)
-
-        # New comments proposing solutions for the complex problems
-        comment2 = Comment(text="For the ERP integration, you could use a tool like Zeep in Python to parse the WSDL, and then use an LLM to map the SOAP methods to RESTful endpoints. I've built something similar using FastAPI.", author_id=user2.id, post_id=post3.id)
-        comment3 = Comment(text="Are you open to using local open-source LLMs? We could set up a secure gateway that translates the SOAP payloads without sending sensitive data to cloud APIs.", author_id=user3.id, post_id=post3.id)
+        comment2 = Comment(text="I've seen some vision APIs that handle this, but they are expensive for small shops.", author_id=user4.id, post_id=post1.id)
+        comment3 = Comment(text="For the ERP integration, you could use a tool like Zeep in Python to parse the WSDL, and then use an LLM to map the SOAP methods to RESTful endpoints.", author_id=user2.id, post_id=post3.id)
+        comment4 = Comment(text="Are you open to using local open-source LLMs? We could set up a secure gateway with Llama 3.", author_id=user3.id, post_id=post3.id)
+        comment5 = Comment(text="Traditional CV is definitely tricky here. Have you looked into YOLOv10?", author_id=user3.id, post_id=post4.id)
+        comment6 = Comment(text="For the fleet routing, Google's OR-Tools combined with Mapbox could work.", author_id=user2.id, post_id=post5.id)
+        comment7 = Comment(text="Does the ERP system have a database we can query directly or is it strictly accessible via SOAP?", author_id=user4.id, post_id=post3.id)
+        comment8 = Comment(text="I've tried similar things in manufacturing. Lighting conditions are usually the biggest hurdle for CV.", author_id=user4.id, post_id=post4.id)
+        comment9 = Comment(text="We are currently using a similar system for 10 trucks, scaling to 50 is definitely a challenge.", author_id=user5.id, post_id=post5.id)
+        comment10 = Comment(text="I just tried the prototype linked above, it works flawlessly on my test receipts! What LLM is powering this?", author_id=user1.id, post_id=post6.id)
+        comment11 = Comment(text="This invoice parser could save us 20 hours a week in data entry!", author_id=user5.id, post_id=post6.id)
+        comment12 = Comment(text="Are the extracted line items accurate for handwritten invoices too?", author_id=user4.id, post_id=post6.id)
         
-        comment4 = Comment(text="Traditional CV is definitely tricky here. Have you looked into YOLOv8 or an Anomaly Detection model like PatchCore? They tend to perform much better on micro-defects and can run on Jetson Nanos at the edge.", author_id=user3.id, post_id=post4.id)
-        
-        comment5 = Comment(text="For the fleet routing, Google's OR-Tools combined with a real-time traffic API like Mapbox or Google Maps could solve this. The tricky part is pushing the dynamic updates to the drivers seamlessly.", author_id=user2.id, post_id=post5.id)
-        
-        comment6 = Comment(text="I just tried the prototype linked above, it works flawlessly on my test receipts! What LLM is powering this?", author_id=user1.id, post_id=post6.id)
-        
-        db.session.add_all([comment2, comment3, comment4, comment5, comment6])
+        db.session.add_all([comment1, comment2, comment3, comment4, comment5, comment6, comment7, comment8, comment9, comment10, comment11, comment12])
         db.session.commit()
 
         print("Adding mock edit suggestion...")
@@ -131,11 +135,11 @@ def seed_data():
         vote4 = Upvote(user_id=user2.id, post_id=post6.id)
 
         
-        vote3 = Upvote(user_id=user2.id, post_id=post3.id)
-        vote4 = Upvote(user_id=user3.id, post_id=post4.id)
-        vote5 = Upvote(user_id=user1.id, post_id=post5.id)
+        vote5 = Upvote(user_id=user2.id, post_id=post3.id)
+        vote6 = Upvote(user_id=user3.id, post_id=post4.id)
+        vote7 = Upvote(user_id=user1.id, post_id=post5.id)
         
-        db.session.add_all([vote1, vote2, vote3, vote4, vote5])
+        db.session.add_all([vote1, vote2, vote3, vote4, vote5, vote6, vote7])
         db.session.commit()
 
         print("Database seeded successfully with mock data!")
